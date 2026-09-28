@@ -210,6 +210,26 @@ body {
     box-shadow: -20px 0 50px rgba(15, 23, 42, 0.12);
 }
 
+/* Drawer Toggle Active State Button Styling */
+#btn-toggle-left-drawer.active,
+#btn-toggle-right-drawer.active {
+    background-color: var(--ruled-cobalt) !important;
+    border-color: var(--ruled-cobalt-light) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(0, 43, 187, 0.4) !important;
+}
+
+#btn-toggle-left-drawer.active *,
+#btn-toggle-right-drawer.active *,
+#btn-toggle-left-drawer.active .drawer-btn-icon,
+#btn-toggle-left-drawer.active .drawer-btn-text,
+#btn-toggle-right-drawer.active .drawer-btn-icon,
+#btn-toggle-right-drawer.active .drawer-btn-text {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
 /* Precision Clean Range Sliders */
 input[type="range"] {
     -webkit-appearance: none;

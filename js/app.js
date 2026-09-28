@@ -527,10 +527,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state.leftDrawerOpen = (open !== undefined) ? open : !state.leftDrawerOpen;
         if (state.leftDrawerOpen) {
             el.leftDrawer.classList.add('open');
-            el.btnToggleLeft.className = "px-3 py-1.5 rounded-md bg-[#002bbb] text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md";
+            el.btnToggleLeft.classList.add('active');
+            el.btnToggleLeft.className = "px-3.5 py-1.5 rounded-lg bg-[#002bbb] text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md active cursor-pointer";
         } else {
             el.leftDrawer.classList.remove('open');
-            el.btnToggleLeft.className = "px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs";
+            el.btnToggleLeft.classList.remove('active');
+            el.btnToggleLeft.className = "px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer";
         }
     }
 
@@ -538,10 +540,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state.rightDrawerOpen = (open !== undefined) ? open : !state.rightDrawerOpen;
         if (state.rightDrawerOpen) {
             el.rightDrawer.classList.add('open');
-            el.btnToggleRight.className = "px-3 py-1.5 rounded-md bg-[#002bbb] text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md";
+            el.btnToggleRight.classList.add('active');
+            el.btnToggleRight.className = "px-3.5 py-1.5 rounded-lg bg-[#002bbb] text-white font-semibold text-xs flex items-center gap-2 transition-all shadow-md active cursor-pointer";
         } else {
             el.rightDrawer.classList.remove('open');
-            el.btnToggleRight.className = "px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs";
+            el.btnToggleRight.classList.remove('active');
+            el.btnToggleRight.className = "px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer";
         }
     }
 

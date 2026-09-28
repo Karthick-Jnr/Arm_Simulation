@@ -58,49 +58,63 @@ class FbdVisualizer2D {
         const dynForces = dynamicsData.dynamicForces || {};
         const torques = dynamicsData.torques || {};
 
-        // Scaling & Coordinate Transform (Arm origin at bottom-left)
+        // Scaling & Dynamic Centering (Horizontally and Vertically Centered)
         const L1 = config.L1 || 170;
         const L2 = config.L2 || 170;
         const L3 = config.L3 || 60;
         const L_base = config.L_base || 48;
-        const maxReach = L1 + L2 + L3 + 120;
-        const scale = Math.max(0.2, Math.min((w - 220) / maxReach, (h - 150) / (maxReach * 0.95)));
+        const totalArmReach = L1 + L2 + L3;
+        const maxEnvReach = Math.max(totalArmReach + 50, 460);
         
-        const originX = 130;
-        const originY = h - 90; // Table datum line
+        // Compute responsive scale so the entire reach fits comfortably
+        const scale = Math.max(0.35, Math.min((w - 280) / maxEnvReach, (h - 170) / (totalArmReach * 0.95)));
+        
+        // Dynamically center the kinematic mechanism horizontally in the viewport
+        const diagramWidthPx = (Math.max(totalArmReach, 400) + 120) * scale;
+        const originX = Math.max(160, Math.floor((w - diagramWidthPx) / 2 + 80 * scale));
+        const originY = Math.floor(h - 95); // Workbench datum baseline
 
         const toScreen = (rx, z) => ({
             x: originX + (rx || 0) * scale,
             y: originY - (z || 0) * scale
         });
 
-        // 1. Technical Drafting Grid
-        ctx.strokeStyle = "rgba(15, 23, 42, 0.05)";
+        // 1. Technical Drafting Blueprint Grid (Full Canvas)
+        ctx.strokeStyle = "rgba(15, 23, 42, 0.04)";
         ctx.lineWidth = 1;
-        for (let x = originX; x < w; x += 50 * scale) {
-            ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, originY + 50); ctx.stroke();
+        const gridStep = 50 * scale;
+        
+        // Vertical grid lines aligned to originX
+        for (let x = originX; x < w; x += gridStep) {
+            ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, originY + 65); ctx.stroke();
         }
-        for (let z = 0; z < 600; z += 50) {
+        for (let x = originX - gridStep; x > 0; x -= gridStep) {
+            ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, originY + 65); ctx.stroke();
+        }
+        
+        // Horizontal grid lines
+        for (let z = 0; z < 700; z += 50) {
             const y = originY - z * scale;
-            if (y > 20) {
-                ctx.beginPath(); ctx.moveTo(originX - 80, y); ctx.lineTo(w - 20, y); ctx.stroke();
+            if (y > 10) {
+                ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(w - 10, y); ctx.stroke();
             }
         }
 
-        // 2. Workbench Datum (Z = 0)
-        ctx.fillStyle = "#f1f5f9";
-        ctx.fillRect(originX - 80, originY, w - (originX - 80), 65);
+        // 2. Workbench Reference Datum (Full Width Floor)
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(0, originY, w, h - originY);
+        
         ctx.strokeStyle = "#002bbb";
         ctx.lineWidth = 2.0;
         ctx.beginPath();
-        ctx.moveTo(originX - 80, originY);
-        ctx.lineTo(w - 20, originY);
+        ctx.moveTo(0, originY);
+        ctx.lineTo(w, originY);
         ctx.stroke();
 
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 9.5px 'Google Sans', 'Product Sans', sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("WORKBENCH REFERENCE DATUM // Z = 0.00 mm", w - 30, originY + 20);
+        ctx.fillText("WORKBENCH REFERENCE DATUM // Z = 0.00 mm", w - 35, originY + 22);
         ctx.textAlign = "left";
 
         // 3. Optimal Sorting Zone (300mm to 400mm)
