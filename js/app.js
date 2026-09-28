@@ -366,17 +366,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 8. Dynamic Physical Trajectory Waypoints
+    // 8. Dynamic Physical Trajectory Waypoints (Collision-Free Pick & Place Sequence)
     const trajectoryWaypoints = [
-        { name: "Standby Home", q1: 0, q2: 68, q3: -42, q4: -26, gripOpen: true, holdPay: false, durationMs: 1200 },
-        { name: "Approach Pick Station", q1: 34, q2: 38, q3: -48, q4: 10, gripOpen: true, holdPay: false, durationMs: 1400 },
-        { name: "Descend Over Workpiece", q1: 34, q2: 18, q3: -52, q4: 34, gripOpen: true, holdPay: false, durationMs: 1100 },
-        { name: "Clamp Gripper & Lock", q1: 34, q2: 18, q3: -52, q4: 34, gripOpen: false, holdPay: true, durationMs: 900 },
-        { name: "Dynamic Lift (a = 2.5 m/s²)", q1: 34, q2: 54, q3: -36, q4: -18, gripOpen: false, holdPay: true, durationMs: 1400 },
-        { name: "Slew to Drop Destination", q1: -34, q2: 54, q3: -36, q4: -18, gripOpen: false, holdPay: true, durationMs: 1600 },
-        { name: "Lower to Drop Station", q1: -34, q2: 20, q3: -50, q4: 30, gripOpen: false, holdPay: true, durationMs: 1300 },
-        { name: "Release Workpiece", q1: -34, q2: 20, q3: -50, q4: 30, gripOpen: true, holdPay: false, durationMs: 900 },
-        { name: "Ascend & Return to Home", q1: 0, q2: 68, q3: -42, q4: -26, gripOpen: true, holdPay: false, durationMs: 1500 }
+        // 1. Standby Home: Safe elevated home pose, gripper wide open
+        { name: "Standby Home", q1: 0, q2: 68, q3: -42, q4: -26, gripOpen: 1.0, holdPay: false, atDrop: false, durationMs: 1200 },
+        
+        // 2. Approach Pick High: Elevate over pick station (Z ≈ 80mm), wide open gripper
+        { name: "Approach Pick Station", q1: 33.7, q2: 51.0, q3: -84.3, q4: 23.3, gripOpen: 1.0, holdPay: false, atDrop: false, durationMs: 1300 },
+        
+        // 3. Vertical Descend: Lower fingers vertically down around workpiece (Z ≈ 22mm) with fingers open
+        { name: "Descend Over Workpiece", q1: 33.7, q2: 37.6, q3: -85.5, q4: 42.9, gripOpen: 1.0, holdPay: false, atDrop: false, durationMs: 1000 },
+        
+        // 4. Smooth Clamp: Fingers close snugly from 1.0 -> 0.0 to grasp workpiece firmly
+        { name: "Clamp Gripper & Lock", q1: 33.7, q2: 37.6, q3: -85.5, q4: 42.9, gripOpen: 0.0, holdPay: true, atDrop: false, durationMs: 800 },
+        
+        // 5. Dynamic Vertical Lift: Lift workpiece cleanly straight up with dynamic acceleration
+        { name: "Dynamic Lift (a = 2.5 m/s²)", q1: 33.7, q2: 59.1, q3: -77.6, q4: 18.5, gripOpen: 0.0, holdPay: true, atDrop: false, durationMs: 1200 },
+        
+        // 6. Horizontal Slew: Transport held workpiece across to drop station at elevated safe height
+        { name: "Slew to Drop Destination", q1: -33.7, q2: 59.1, q3: -77.6, q4: 18.5, gripOpen: 0.0, holdPay: true, atDrop: false, durationMs: 1500 },
+        
+        // 7. Lower to Drop Station: Place workpiece gently onto drop pad
+        { name: "Lower to Drop Station", q1: -33.7, q2: 37.6, q3: -85.5, q4: 42.9, gripOpen: 0.0, holdPay: true, atDrop: true, durationMs: 1200 },
+        
+        // 8. Smooth Release: Fingers slide wide open from 0.0 -> 1.0 to release workpiece
+        { name: "Release Workpiece", q1: -33.7, q2: 37.6, q3: -85.5, q4: 42.9, gripOpen: 1.0, holdPay: false, atDrop: true, durationMs: 800 },
+        
+        // 9. Vertical Retract: Ascend straight up away from released workpiece
+        { name: "Vertical Retract", q1: -33.7, q2: 59.1, q3: -77.6, q4: 18.5, gripOpen: 1.0, holdPay: false, atDrop: true, durationMs: 1000 },
+        
+        // 10. Return to Home: Return arm to Standby pose for continuous loop
+        { name: "Return to Home", q1: 0, q2: 68, q3: -42, q4: -26, gripOpen: 1.0, holdPay: false, atDrop: true, durationMs: 1300 }
     ];
 
     // 9. Continuous Dynamic Simulation Playback Engine
@@ -406,8 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isPayloadHeld = false;
         if (visualizer3D) {
             visualizer3D.clearTrajectory();
-            visualizer3D.setPayloadHeld(false, state.payloadG);
-            visualizer3D.setGripperAperture(true);
+            visualizer3D.setPayloadHeld(false, state.payloadG, false);
+            visualizer3D.setGripperAperture(1.0);
         }
         
         // Return to default pose
@@ -444,7 +464,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (state.simWpIndex >= trajectoryWaypoints.length) {
                 if (state.simLoop) {
                     state.simWpIndex = 0;
-                    if (visualizer3D) visualizer3D.clearTrajectory();
+                    if (visualizer3D) {
+                        visualizer3D.clearTrajectory();
+                        visualizer3D.setPayloadHeld(false, state.payloadG, false);
+                    }
                 } else {
                     resetSimulation();
                     return;
@@ -452,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Smooth Quintic Step
+        // Smooth Quintic Step Interpolation
         const t = Math.min(1.0, state.simProgressT);
         const ease = t * t * t * (t * (t * 6 - 15) + 10);
 
@@ -463,12 +486,18 @@ document.addEventListener('DOMContentLoaded', () => {
         state.theta2 = wpA.q2 + (wpB.q2 - wpA.q2) * ease;
         state.theta3 = wpA.q3 + (wpB.q3 - wpA.q3) * ease;
         state.theta4 = wpA.q4 + (wpB.q4 - wpA.q4) * ease;
+        
+        // Continuous Smooth Gripper Aperture Motion (Opening / Closing Fingers)
+        const gripA = typeof wpA.gripOpen === 'number' ? wpA.gripOpen : (wpA.gripOpen ? 1.0 : 0.0);
+        const gripB = typeof wpB.gripOpen === 'number' ? wpB.gripOpen : (wpB.gripOpen ? 1.0 : 0.0);
+        const currentAperture = gripA + (gripB - gripA) * ease;
+
         state.isPayloadHeld = wpA.holdPay;
 
-        // Gripper & Workpiece state
+        // Synchronize 3D Gripper Fingers and Workpiece Status
         if (visualizer3D) {
-            visualizer3D.setGripperAperture(wpA.gripOpen);
-            visualizer3D.setPayloadHeld(wpA.holdPay, state.payloadG);
+            visualizer3D.setGripperAperture(currentAperture);
+            visualizer3D.setPayloadHeld(wpA.holdPay, state.payloadG, wpA.atDrop || false);
         }
 
         // Update Sliders in drawer
@@ -701,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         el.btnPresetHome.addEventListener('click', () => applyPose(0, 68, -42, -26));
-        el.btnPresetPick.addEventListener('click', () => applyPose(34, 18, -52, 34));
+        el.btnPresetPick.addEventListener('click', () => applyPose(34, 38, -85, 43));
         el.btnPresetMaxReach.addEventListener('click', () => applyPose(0, 0, 0, 0));
 
         // Export Report

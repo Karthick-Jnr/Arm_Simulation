@@ -193,29 +193,39 @@ class ArmVisualizer3D {
         addRadiusRing(500, 0x64748b, 0.35);
 
         // 1. Pick Station Marker & Workpiece (at X = 240, Y = 160)
-        const pickGeo = new THREE.RingGeometry(24, 30, 32);
+        const pickGeo = new THREE.RingGeometry(24, 32, 32);
         const pickMat = new THREE.MeshBasicMaterial({ color: 0x002bbb, side: THREE.DoubleSide });
         this.pickStationMesh = new THREE.Mesh(pickGeo, pickMat);
         this.pickStationMesh.position.set(240, 160, 1.5);
         this.scene.add(this.pickStationMesh);
 
-        // Workpiece on Table
-        const objGeo = new THREE.CylinderGeometry(16, 16, 28, 24);
+        // Pick Station Workpiece Object (Height 28mm, Radius 14mm)
+        const objGeo = new THREE.CylinderGeometry(14, 14, 28, 24);
         objGeo.rotateX(Math.PI / 2);
         const objMat = new THREE.MeshStandardMaterial({ color: 0x002bbb, roughness: 0.3, metalness: 0.5 });
-        this.tableWorkpiece = new THREE.Mesh(objGeo, objMat);
-        this.tableWorkpiece.position.set(240, 160, 14);
-        this.tableWorkpiece.castShadow = true;
-        this.tableWorkpiece.receiveShadow = true;
-        this.tableWorkpiece.userData = { targetType: 'payload', name: 'Workpiece Object' };
-        this.scene.add(this.tableWorkpiece);
+        this.pickWorkpiece = new THREE.Mesh(objGeo, objMat);
+        this.pickWorkpiece.position.set(240, 160, 14);
+        this.pickWorkpiece.castShadow = true;
+        this.pickWorkpiece.receiveShadow = true;
+        this.pickWorkpiece.userData = { targetType: 'payload', name: 'Workpiece (Pick Station)' };
+        this.scene.add(this.pickWorkpiece);
+        this.tableWorkpiece = this.pickWorkpiece; // alias for highlights
 
         // 2. Drop Station Destination (at X = -240, Y = 160)
-        const dropGeo = new THREE.RingGeometry(24, 30, 32);
+        const dropGeo = new THREE.RingGeometry(24, 32, 32);
         const dropMat = new THREE.MeshBasicMaterial({ color: 0x475569, side: THREE.DoubleSide });
         this.dropStationMesh = new THREE.Mesh(dropGeo, dropMat);
         this.dropStationMesh.position.set(-240, 160, 1.5);
         this.scene.add(this.dropStationMesh);
+
+        // Drop Station Placed Workpiece
+        this.dropWorkpiece = new THREE.Mesh(objGeo.clone(), objMat.clone());
+        this.dropWorkpiece.position.set(-240, 160, 14);
+        this.dropWorkpiece.castShadow = true;
+        this.dropWorkpiece.receiveShadow = true;
+        this.dropWorkpiece.visible = false;
+        this.dropWorkpiece.userData = { targetType: 'payload', name: 'Workpiece (Drop Station)' };
+        this.scene.add(this.dropWorkpiece);
     }
 
     createMaterials() {
@@ -450,51 +460,84 @@ class ArmVisualizer3D {
             this.gripperGroup.remove(this.gripperGroup.children[0]);
         }
         this.gripperFingers = [];
+        this.gripperFSR = [];
 
-        const palmGeo = new THREE.BoxGeometry(26, 32, 22);
+        // 1. Central Gripper Mounting Palm Chassis (Titanium Slate)
+        const palmGeo = new THREE.BoxGeometry(24, 34, 22);
         const palm = new THREE.Mesh(palmGeo, this.materials.gripperFingers);
         palm.position.set(12, 0, 0);
         palm.castShadow = true;
-        palm.userData = { targetType: 'joint4', name: "Gripper Palm" };
+        palm.userData = { targetType: 'joint4', name: "Gripper Palm Chassis" };
         this.gripperGroup.add(palm);
 
-        const fingerLength = Math.max(15, gripperLengthMm - 14);
-        const fingerGeo = new THREE.BoxGeometry(fingerLength, 7, 18);
+        // Linear Guide Rail (Stainless Steel)
+        const railGeo = new THREE.BoxGeometry(10, 44, 4);
+        const rail = new THREE.Mesh(railGeo, this.materials.hardwareSteel);
+        rail.position.set(16, 0, 0);
+        this.gripperGroup.add(rail);
 
+        const fingerLength = Math.max(18, gripperLengthMm - 14);
+        const fingerGeo = new THREE.BoxGeometry(fingerLength, 6, 18);
+
+        // Left Sliding Finger
         const fingerLeft = new THREE.Mesh(fingerGeo, this.materials.gripperFingers);
-        fingerLeft.position.set(12 + fingerLength / 2, 12, 0);
+        fingerLeft.position.set(12 + fingerLength / 2, 18, 0);
         fingerLeft.castShadow = true;
         this.gripperGroup.add(fingerLeft);
         this.gripperFingers.push(fingerLeft);
 
+        // Right Sliding Finger
         const fingerRight = new THREE.Mesh(fingerGeo, this.materials.gripperFingers);
-        fingerRight.position.set(12 + fingerLength / 2, -12, 0);
+        fingerRight.position.set(12 + fingerLength / 2, -18, 0);
         fingerRight.castShadow = true;
         this.gripperGroup.add(fingerRight);
         this.gripperFingers.push(fingerRight);
 
-        // FSR Sensors (Laser Lime pads)
-        const fsrGeo = new THREE.BoxGeometry(fingerLength * 0.7, 1.5, 14);
-        const fsrLeft = new THREE.Mesh(fsrGeo, this.materials.fsrSensor);
-        fsrLeft.position.set(12 + fingerLength / 2, 8.5, 0);
+        // Tactile Pressure Sensing Pads (Laser Lime High-Visibility Gripper Liners)
+        const padGeo = new THREE.BoxGeometry(fingerLength * 0.75, 1.8, 14);
+        const fsrLeft = new THREE.Mesh(padGeo, this.materials.fsrSensor);
+        fsrLeft.position.set(12 + fingerLength / 2, 15, 0);
         this.gripperGroup.add(fsrLeft);
+        this.gripperFSR.push(fsrLeft);
 
-        const fsrRight = new THREE.Mesh(fsrGeo, this.materials.fsrSensor);
-        fsrRight.position.set(12 + fingerLength / 2, -8.5, 0);
+        const fsrRight = new THREE.Mesh(padGeo, this.materials.fsrSensor);
+        fsrRight.position.set(12 + fingerLength / 2, -15, 0);
         this.gripperGroup.add(fsrRight);
+        this.gripperFSR.push(fsrRight);
 
-        if (this.payloadMesh) {
-            this.payloadMesh.position.set(gripperLengthMm + 8, 0, 0);
-            this.gripperGroup.add(this.payloadMesh);
+        // Re-attach Held Payload centered directly inside the finger clamp envelope (x = 38 mm)
+        if (!this.payloadMesh) {
+            const payloadGeo = new THREE.CylinderGeometry(14, 14, 28, 24);
+            payloadGeo.rotateX(Math.PI / 2);
+            this.payloadMesh = new THREE.Mesh(payloadGeo, this.materials.payload);
+            this.payloadMesh.castShadow = true;
+            this.payloadMesh.userData = { targetType: 'payload', name: 'Gripped Payload' };
         }
+        this.payloadMesh.position.set(12 + Math.min(26, fingerLength * 0.55), 0, 0);
+        this.payloadMesh.visible = false;
+        this.gripperGroup.add(this.payloadMesh);
+
+        // Initialize aperture to open (1.0)
+        this.setGripperAperture(1.0);
     }
 
-    setGripperAperture(isOpen) {
-        if (this.gripperFingers.length === 2) {
-            const leftOffset = isOpen ? 18 : 10;
-            const rightOffset = isOpen ? -18 : -10;
-            this.gripperFingers[0].position.y = leftOffset;
-            this.gripperFingers[1].position.y = rightOffset;
+    setGripperAperture(ratio) {
+        // ratio: 0.0 (fully clamped closed on 28mm object) -> 1.0 (wide open approach clearance)
+        const r = typeof ratio === 'number' ? Math.max(0.0, Math.min(1.0, ratio)) : (ratio ? 1.0 : 0.0);
+        this.gripperApertureRatio = r;
+        
+        if (this.gripperFingers && this.gripperFingers.length === 2) {
+            // Closed: fingers at +/- 15.5mm (inner clearance = 25mm, clamping snug on 28mm cylinder)
+            // Open: fingers at +/- 24mm (inner clearance = 42mm, clean clearance around object)
+            const leftY = 15.5 + r * 8.5;
+            const rightY = -15.5 - r * 8.5;
+            this.gripperFingers[0].position.y = leftY;
+            this.gripperFingers[1].position.y = rightY;
+
+            if (this.gripperFSR && this.gripperFSR.length === 2) {
+                this.gripperFSR[0].position.y = leftY - 2.8;
+                this.gripperFSR[1].position.y = rightY + 2.8;
+            }
         }
     }
 
@@ -760,16 +803,21 @@ class ArmVisualizer3D {
         this.workspaceGroup.visible = visible;
     }
 
-    setPayloadHeld(isHeld, payloadG = 200) {
+    setPayloadHeld(isHeld, payloadG = 200, isAtDrop = false) {
         if (this.payloadMesh) {
             this.payloadMesh.visible = isHeld && (payloadG > 0);
             if (payloadG > 0) {
-                const scale = Math.max(0.7, Math.min(2.0, Math.cbrt(payloadG / 200.0)));
+                const scale = Math.max(0.7, Math.min(1.8, Math.cbrt(payloadG / 200.0)));
                 this.payloadMesh.scale.set(scale, scale, scale);
+                if (this.pickWorkpiece) this.pickWorkpiece.scale.set(scale, scale, scale);
+                if (this.dropWorkpiece) this.dropWorkpiece.scale.set(scale, scale, scale);
             }
         }
-        if (this.tableWorkpiece) {
-            this.tableWorkpiece.visible = !isHeld;
+        if (this.pickWorkpiece) {
+            this.pickWorkpiece.visible = !isHeld && !isAtDrop;
+        }
+        if (this.dropWorkpiece) {
+            this.dropWorkpiece.visible = !isHeld && isAtDrop;
         }
     }
 
