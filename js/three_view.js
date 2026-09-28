@@ -389,21 +389,11 @@ class ArmVisualizer3D {
         this.j4Housing.userData = { targetType: 'joint4', name: "Joint 4 (Wrist / Gripper)" };
         this.j4WristGroup.add(this.j4Housing);
 
-        // 7. Gripper Mechanism Group
+        // 7. Gripper Mechanism Group (includes single properly-aligned gripped payload mesh)
         this.gripperGroup = new THREE.Group();
         this.j4WristGroup.add(this.gripperGroup);
 
         this.buildMechanicalGripper(60);
-
-        // 8. Attached Gripped Payload Mesh
-        const payloadGeo = new THREE.CylinderGeometry(16, 16, 28, 24);
-        payloadGeo.rotateX(Math.PI / 2);
-        this.payloadMesh = new THREE.Mesh(payloadGeo, this.materials.payload);
-        this.payloadMesh.position.set(60, 0, 0);
-        this.payloadMesh.castShadow = true;
-        this.payloadMesh.visible = false;
-        this.payloadMesh.userData = { targetType: 'payload', name: 'Gripped Payload' };
-        this.gripperGroup.add(this.payloadMesh);
     }
 
     buildMechanicalLink(lengthMm, widthMm, heightMm, linkId) {

@@ -1,19 +1,116 @@
 /**
  * Real-Time 2D Free Body Diagram (FBD) - Technical Drafting Visualizer
  * Features:
- * - Pure White & Slate Technical Drafting Aesthetic
- * - 60 FPS Real-time Kinematic Animation
- * - Collision-Free Callout Badges for Joints, Torques & Force Vectors
- * - Dynamic Vector Scaling & Moment Arm Projection
+ * - True Canvas-Centered Mechanism & Active Sorting Zone Placement
+ * - Interactive Pan & Zoom Engine (Mouse Drag to Pan, Wheel to Zoom, Double-Click / Button to Center)
+ * - 60 FPS Real-time Kinematic Animation & Dynamic Moment Arm Projections
+ * - Collision-Free Callout Badges for Joint Torques, Safety Factors & Force Vectors
  */
 
 class FbdVisualizer2D {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
+        this.ctx = null;
+        this.displayW = 800;
+        this.displayH = 600;
+
+        // Interactive Pan & Zoom State
+        this.panX = 0;
+        this.panY = 0;
+        this.zoom = 1.0;
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.lastDynamicsData = null;
+        this.lastConfig = null;
+        this.lastIsHeld = false;
+
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
+            this.setupInteractivity();
             this.resize();
             window.addEventListener('resize', () => this.resize());
+        }
+    }
+
+    setupInteractivity() {
+        if (!this.canvas) return;
+        const c = this.canvas;
+        c.style.cursor = 'grab';
+
+        // Mouse Down (Start Pan)
+        c.addEventListener('pointerdown', (e) => {
+            this.isDragging = true;
+            this.dragStartX = e.clientX - this.panX;
+            this.dragStartY = e.clientY - this.panY;
+            c.style.cursor = 'grabbing';
+            c.setPointerCapture?.(e.pointerId);
+        });
+
+        // Mouse Move (Pan)
+        c.addEventListener('pointermove', (e) => {
+            if (!this.isDragging) return;
+            this.panX = e.clientX - this.dragStartX;
+            this.panY = e.clientY - this.dragStartY;
+            this.renderLast();
+        });
+
+        // Mouse Up / Cancel
+        const endDrag = (e) => {
+            if (this.isDragging) {
+                this.isDragging = false;
+                c.style.cursor = 'grab';
+                c.releasePointerCapture?.(e.pointerId);
+            }
+        };
+        c.addEventListener('pointerup', endDrag);
+        c.addEventListener('pointercancel', endDrag);
+
+        // Mouse Wheel (Zoom in / out centered around mouse cursor)
+        c.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = c.getBoundingClientRect();
+            const mouseCanvasX = e.clientX - rect.left;
+            const mouseCanvasY = e.clientY - rect.top;
+
+            const zoomDelta = e.deltaY < 0 ? 1.12 : 0.89;
+            const newZoom = Math.max(0.4, Math.min(3.5, this.zoom * zoomDelta));
+            const actualRatio = newZoom / this.zoom;
+
+            // Adjust pan so the point under cursor remains stationary
+            this.panX = mouseCanvasX - (mouseCanvasX - this.panX) * actualRatio;
+            this.panY = mouseCanvasY - (mouseCanvasY - this.panY) * actualRatio;
+            this.zoom = newZoom;
+
+            this.renderLast();
+        }, { passive: false });
+
+        // Double Click to Reset View to Center
+        c.addEventListener('dblclick', () => {
+            this.resetView();
+        });
+    }
+
+    resetView() {
+        this.panX = 0;
+        this.panY = 0;
+        this.zoom = 1.0;
+        this.renderLast();
+    }
+
+    zoomIn() {
+        this.zoom = Math.min(3.5, this.zoom * 1.2);
+        this.renderLast();
+    }
+
+    zoomOut() {
+        this.zoom = Math.max(0.4, this.zoom / 1.2);
+        this.renderLast();
+    }
+
+    renderLast() {
+        if (this.lastDynamicsData && this.lastConfig) {
+            this.render(this.lastDynamicsData, this.lastConfig, this.lastIsHeld);
         }
     }
 
@@ -31,6 +128,7 @@ class FbdVisualizer2D {
         }
         this.displayW = rect.width;
         this.displayH = rect.height;
+        this.renderLast();
     }
 
     render(dynamicsData, config, isHeld = true) {
@@ -40,6 +138,10 @@ class FbdVisualizer2D {
         }
         if (!this.ctx || !dynamicsData || !dynamicsData.fk) return;
         
+        this.lastDynamicsData = dynamicsData;
+        this.lastConfig = config;
+        this.lastIsHeld = isHeld;
+
         if (!this.displayW || this.displayW === 0) {
             this.resize();
         }
@@ -58,21 +160,27 @@ class FbdVisualizer2D {
         const dynForces = dynamicsData.dynamicForces || {};
         const torques = dynamicsData.torques || {};
 
-        // Scaling & Dynamic Centering (Horizontally and Vertically Centered)
         const L1 = config.L1 || 170;
         const L2 = config.L2 || 170;
         const L3 = config.L3 || 60;
         const L_base = config.L_base || 48;
         const totalArmReach = L1 + L2 + L3;
-        const maxEnvReach = Math.max(totalArmReach + 50, 460);
-        
-        // Compute responsive scale so the entire reach fits comfortably
-        const scale = Math.max(0.35, Math.min((w - 280) / maxEnvReach, (h - 170) / (totalArmReach * 0.95)));
-        
-        // Dynamically center the kinematic mechanism horizontally in the viewport
-        const diagramWidthPx = (Math.max(totalArmReach, 400) + 120) * scale;
-        const originX = Math.max(160, Math.floor((w - diagramWidthPx) / 2 + 80 * scale));
-        const originY = Math.floor(h - 95); // Workbench datum baseline
+
+        // Responsive Base Scale calculation to comfortably fit the robot and the 400mm envelope
+        const maxExpectedSpan = Math.max(totalArmReach + 60, 480);
+        const baseScale = Math.max(0.4, Math.min((w - 200) / maxExpectedSpan, (h - 180) / 420));
+        const scale = baseScale * this.zoom;
+
+        // Perfect Center Alignment:
+        // System horizontal envelope extends from pedestal (R = -30mm) to active sorting envelope / max reach (R = 400mm)
+        // Midpoint of the entire physical working zone is R_mid ≈ 185 mm.
+        // We place R_mid directly at the horizontal center (w / 2).
+        const systemMidpointMm = 185;
+        const defaultOriginX = Math.floor(w / 2 - systemMidpointMm * scale);
+        const defaultOriginY = Math.floor(h * 0.72); // Workbench datum line positioned nicely in lower quadrant
+
+        const originX = defaultOriginX + this.panX;
+        const originY = defaultOriginY + this.panY;
 
         const toScreen = (rx, z) => ({
             x: originX + (rx || 0) * scale,
@@ -80,29 +188,31 @@ class FbdVisualizer2D {
         });
 
         // 1. Technical Drafting Blueprint Grid (Full Canvas)
+        ctx.save();
         ctx.strokeStyle = "rgba(15, 23, 42, 0.04)";
         ctx.lineWidth = 1;
-        const gridStep = 50 * scale;
+        const gridStep = Math.max(20, 50 * scale);
         
-        // Vertical grid lines aligned to originX
-        for (let x = originX; x < w; x += gridStep) {
-            ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, originY + 65); ctx.stroke();
+        // Vertical grid lines
+        for (let x = originX; x < w + 200; x += gridStep) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
         }
-        for (let x = originX - gridStep; x > 0; x -= gridStep) {
-            ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, originY + 65); ctx.stroke();
+        for (let x = originX - gridStep; x > -200; x -= gridStep) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
         }
         
         // Horizontal grid lines
-        for (let z = 0; z < 700; z += 50) {
+        for (let z = 0; z < 800; z += 50) {
             const y = originY - z * scale;
-            if (y > 10) {
-                ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(w - 10, y); ctx.stroke();
+            if (y > -50 && y < h + 50) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
             }
         }
+        ctx.restore();
 
-        // 2. Workbench Reference Datum (Full Width Floor)
+        // 2. Workbench Reference Datum Line
         ctx.fillStyle = "#f8fafc";
-        ctx.fillRect(0, originY, w, h - originY);
+        ctx.fillRect(0, originY, w, Math.max(0, h - originY));
         
         ctx.strokeStyle = "#002bbb";
         ctx.lineWidth = 2.0;
@@ -114,29 +224,31 @@ class FbdVisualizer2D {
         ctx.fillStyle = "#64748b";
         ctx.font = "bold 9.5px 'Google Sans', 'Product Sans', sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText("WORKBENCH REFERENCE DATUM // Z = 0.00 mm", w - 35, originY + 22);
+        ctx.fillText("WORKBENCH REFERENCE DATUM // Z = 0.00 mm", w - 24, originY + 20);
         ctx.textAlign = "left";
 
         // 3. Optimal Sorting Zone (300mm to 400mm)
         const zStart = toScreen(300, 0).x;
         const zEnd = toScreen(400, 0).x;
-        ctx.fillStyle = "rgba(0, 43, 187, 0.04)";
-        ctx.fillRect(zStart, 30, zEnd - zStart, originY - 30);
+        const topY = Math.max(20, originY - 360 * scale);
+        
+        ctx.fillStyle = "rgba(0, 43, 187, 0.045)";
+        ctx.fillRect(zStart, topY, zEnd - zStart, originY - topY);
         ctx.strokeStyle = "rgba(0, 43, 187, 0.35)";
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(zStart, 30, zEnd - zStart, originY - 30);
+        ctx.strokeRect(zStart, topY, zEnd - zStart, originY - topY);
         ctx.setLineDash([]);
         
         ctx.fillStyle = "#002bbb";
         ctx.font = "bold 9.5px 'Google Sans', 'Product Sans', sans-serif";
-        ctx.fillText("ACTIVE SORTING ENVELOPE [300 - 400 mm]", zStart + 8, 48);
+        ctx.fillText("ACTIVE SORTING ENVELOPE [300 - 400 mm]", zStart + 8, topY + 16);
 
         // 4. Base Pedestal
         ctx.fillStyle = "#e2e8f0";
         ctx.strokeStyle = "#002bbb";
         ctx.lineWidth = 2;
-        ctx.fillRect(originX - 22, originY - L_base * scale, 44, L_base * scale);
-        ctx.strokeRect(originX - 22, originY - L_base * scale, 44, L_base * scale);
+        ctx.fillRect(originX - 22 * scale, originY - L_base * scale, 44 * scale, L_base * scale);
+        ctx.strokeRect(originX - 22 * scale, originY - L_base * scale, 44 * scale, L_base * scale);
 
         // 5. Kinematic Nodes
         const r1 = fk.p1.rx !== undefined ? fk.p1.rx : 0;
@@ -151,7 +263,7 @@ class FbdVisualizer2D {
 
         // Link 1 (Shoulder to Elbow)
         ctx.strokeStyle = "#002bbb";
-        ctx.lineWidth = 9;
+        ctx.lineWidth = Math.max(5, 9 * scale);
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
@@ -160,7 +272,7 @@ class FbdVisualizer2D {
 
         // Link 2 (Elbow to Wrist)
         ctx.strokeStyle = "#6c82a3";
-        ctx.lineWidth = 7;
+        ctx.lineWidth = Math.max(4, 7 * scale);
         ctx.beginPath();
         ctx.moveTo(p2.x, p2.y);
         ctx.lineTo(p3.x, p3.y);
@@ -168,7 +280,7 @@ class FbdVisualizer2D {
 
         // Gripper (Wrist to Tip)
         ctx.strokeStyle = "#334155";
-        ctx.lineWidth = 4;
+        ctx.lineWidth = Math.max(3, 4 * scale);
         ctx.beginPath();
         ctx.moveTo(p3.x, p3.y);
         ctx.lineTo(p4.x, p4.y);
@@ -181,7 +293,7 @@ class FbdVisualizer2D {
             ctx.strokeStyle = "#002bbb";
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+            ctx.arc(pt.x, pt.y, Math.max(5, 7 * scale), 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
 
@@ -231,7 +343,7 @@ class FbdVisualizer2D {
         // 6. Force Vectors (Downward Dynamic Forces with Clean Pill Labels)
         const drawForceArrowWithBadge = (pt, forceN = 0, label = "", color = "#002bbb") => {
             if (!forceN || forceN < 0.01) return;
-            const arrowLen = Math.max(18, Math.min(65, forceN * 16));
+            const arrowLen = Math.max(18, Math.min(65, forceN * 16 * scale));
             ctx.strokeStyle = color;
             ctx.fillStyle = color;
             ctx.lineWidth = 2.2;

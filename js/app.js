@@ -722,6 +722,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSimulation();
         });
 
+        // 2D Pan / Zoom & Center View Controls
+        const btn2dZoomIn = document.getElementById('btn-2d-zoom-in');
+        const btn2dZoomOut = document.getElementById('btn-2d-zoom-out');
+        const btn2dResetView = document.getElementById('btn-2d-reset-view');
+
+        if (btn2dZoomIn) btn2dZoomIn.addEventListener('click', () => visualizer2D && visualizer2D.zoomIn());
+        if (btn2dZoomOut) btn2dZoomOut.addEventListener('click', () => visualizer2D && visualizer2D.zoomOut());
+        if (btn2dResetView) btn2dResetView.addEventListener('click', () => visualizer2D && visualizer2D.resetView());
+
         // Presets
         const applyPose = (q1, q2, q3, q4) => {
             state.theta1 = q1; state.theta2 = q2; state.theta3 = q3; state.theta4 = q4;

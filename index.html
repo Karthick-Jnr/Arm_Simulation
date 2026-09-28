@@ -130,6 +130,18 @@
         <!-- 2D Free-Body Diagram Canvas Container -->
         <div id="viewport-2d-container" class="w-full h-full relative hidden bg-[#ffffff] z-10">
             <canvas id="fbd-canvas" class="w-full h-full"></canvas>
+            
+            <!-- 2D Pan / Zoom & Center View Floating Toolbar -->
+            <div class="absolute bottom-6 right-6 flex items-center gap-2 z-20 font-sans">
+                <div class="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-300/80 shadow-md flex items-center gap-1.5 text-xs text-slate-700">
+                    <span class="text-[10.5px] font-medium text-slate-500 pr-2 border-r border-slate-200 hidden sm:inline">Drag to Pan • Scroll to Zoom</span>
+                    <button id="btn-2d-zoom-in" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center justify-center transition-colors cursor-pointer" title="Zoom In">+</button>
+                    <button id="btn-2d-zoom-out" class="w-7 h-7 rounded bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold flex items-center justify-center transition-colors cursor-pointer" title="Zoom Out">−</button>
+                    <button id="btn-2d-reset-view" class="px-3 py-1 rounded bg-[#002bbb] hover:bg-[#002294] text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs" title="Reset and Center Diagram">
+                        <span>CENTER VIEW</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Floating Active Joint HUD Badge -->
