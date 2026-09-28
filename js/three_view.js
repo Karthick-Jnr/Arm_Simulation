@@ -211,16 +211,16 @@ class ArmVisualizer3D {
         this.scene.add(this.pickWorkpiece);
         this.tableWorkpiece = this.pickWorkpiece; // alias for highlights
 
-        // 2. Drop Station Destination (at X = -240, Y = 160)
+        // 2. Drop Station Destination (at X = 240, Y = -160, matching q1 = -33.7 deg)
         const dropGeo = new THREE.RingGeometry(24, 32, 32);
         const dropMat = new THREE.MeshBasicMaterial({ color: 0x475569, side: THREE.DoubleSide });
         this.dropStationMesh = new THREE.Mesh(dropGeo, dropMat);
-        this.dropStationMesh.position.set(-240, 160, 1.5);
+        this.dropStationMesh.position.set(240, -160, 1.5);
         this.scene.add(this.dropStationMesh);
 
-        // Drop Station Placed Workpiece
+        // Drop Station Placed Workpiece (exact match to pick workpiece)
         this.dropWorkpiece = new THREE.Mesh(objGeo.clone(), objMat.clone());
-        this.dropWorkpiece.position.set(-240, 160, 14);
+        this.dropWorkpiece.position.set(240, -160, 14);
         this.dropWorkpiece.castShadow = true;
         this.dropWorkpiece.receiveShadow = true;
         this.dropWorkpiece.visible = false;

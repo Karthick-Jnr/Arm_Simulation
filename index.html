@@ -59,13 +59,13 @@
                 <button id="btn-sim-reset" class="w-8 h-8 rounded-md bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-300 transition-colors cursor-pointer" title="Reset Arm to Home Pose">
                     ⏹
                 </button>
-                <!-- Simulation Status Text -->
-                <div class="px-2.5 flex flex-col justify-center border-l border-slate-200">
-                    <div class="flex items-center gap-1.5">
-                        <span id="sim-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <span id="sim-status-label" class="text-xs font-bold text-slate-800 tracking-wide">STANDBY</span>
+                <!-- Simulation Status Text (Static Fixed Width to prevent any jitter / shifting) -->
+                <div class="w-44 sm:w-48 px-2.5 flex flex-col justify-center border-l border-slate-200 overflow-hidden shrink-0 select-none">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span id="sim-status-dot" class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                        <span id="sim-status-label" class="text-xs font-bold text-slate-800 tracking-wide truncate">STANDBY</span>
                     </div>
-                    <span id="sim-status-sub" class="text-[9.5px] font-medium text-slate-500 uppercase tracking-tight">Kinematics & Dynamics</span>
+                    <span id="sim-status-sub" class="text-[9.5px] font-medium text-slate-500 uppercase tracking-tight truncate">Kinematics & Dynamics</span>
                 </div>
                 <!-- Speed Multiplier -->
                 <select id="sim-speed-select" class="text-[11px] py-1 px-1.5 bg-white border-slate-300 text-slate-700 rounded font-semibold">
