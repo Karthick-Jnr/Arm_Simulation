@@ -144,20 +144,22 @@
             </div>
         </div>
 
-        <!-- Floating Active Joint HUD Badge -->
-        <div id="active-joint-hud" class="absolute top-4 left-4 ruled-panel p-3.5 flex flex-col gap-1.5 z-20 shadow-lg max-w-xs crosshair-corner border-slate-300/70 bg-white/95 backdrop-blur-md font-sans">
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-[#002bbb] flex items-center gap-1.5">
+        <!-- Floating Active Joint HUD Badge (Strict Static Fixed Width & Height) -->
+        <div id="active-joint-hud" class="absolute top-4 left-4 ruled-panel p-3 flex flex-col justify-between z-20 shadow-lg w-[280px] h-[126px] crosshair-corner border-slate-300/70 bg-white/95 backdrop-blur-md font-sans select-none overflow-hidden">
+            <div class="flex items-center justify-between gap-2 min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#002bbb] flex items-center gap-1.5 shrink-0">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#ccff00] border border-[#002bbb] animate-pulse"></span>
                     ACTIVE TARGET
                 </span>
-                <span id="hud-joint-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#6c82a3] text-white">JOINT 1</span>
+                <span id="hud-joint-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#6c82a3] text-white shrink-0">JOINT 1</span>
             </div>
-            <div id="hud-joint-name" class="text-xs font-bold text-slate-900 tracking-tight">Joint 1: Base Azimuth Slew Hub</div>
-            <div id="hud-joint-motor" class="text-[11px] font-medium text-slate-500">RDS5160 High Torque (60 kg·cm)</div>
+            <div class="flex flex-col gap-0.5 min-w-0 my-0.5">
+                <div id="hud-joint-name" class="text-xs font-bold text-slate-900 tracking-tight truncate" title="Joint 1: Base Azimuth Slew Hub">Joint 1: Base Azimuth Slew Hub</div>
+                <div id="hud-joint-motor" class="text-[11px] font-medium text-slate-500 truncate" title="RDS5160 High Torque (60 kg·cm)">RDS5160 High Torque (60 kg·cm)</div>
+            </div>
             
             <!-- Quick Joint Select Buttons -->
-            <div class="flex items-center gap-1 mt-1 pt-1.5 border-t border-slate-200">
+            <div class="flex items-center gap-1 pt-1.5 border-t border-slate-200 shrink-0">
                 <button id="btn-select-j1" class="flex-1 py-1 text-[10px] font-bold rounded bg-[#002bbb] text-white transition-all shadow-xs cursor-pointer">J1</button>
                 <button id="btn-select-j2" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer">J2</button>
                 <button id="btn-select-j3" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer">J3</button>

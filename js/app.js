@@ -190,35 +190,59 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Update HUD Banner Text
+        // Update HUD Banner Text with Tooltips
         if (targetType === 'joint1') {
             el.hudJointBadge.textContent = "JOINT 1";
             el.hudJointName.textContent = "Joint 1: Base Azimuth Slew Hub";
-            el.hudJointMotor.textContent = `${state.servo1.name} (${state.servo1.torque} kg·cm)`;
+            el.hudJointName.title = "Joint 1: Base Azimuth Slew Hub";
+            const motorStr = `${state.servo1.name} (${state.servo1.torque} kg·cm)`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'joint2') {
             el.hudJointBadge.textContent = "JOINT 2";
             el.hudJointName.textContent = "Joint 2: Shoulder Pitch Servo";
-            el.hudJointMotor.textContent = `${state.servo2.name} (${state.servo2.torque} kg·cm)`;
+            el.hudJointName.title = "Joint 2: Shoulder Pitch Servo";
+            const motorStr = `${state.servo2.name} (${state.servo2.torque} kg·cm)`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'joint3') {
             el.hudJointBadge.textContent = "JOINT 3";
             el.hudJointName.textContent = "Joint 3: Elbow Pitch Servo";
-            el.hudJointMotor.textContent = `${state.servo3.name} (${state.servo3.torque} kg·cm)`;
+            el.hudJointName.title = "Joint 3: Elbow Pitch Servo";
+            const motorStr = `${state.servo3.name} (${state.servo3.torque} kg·cm)`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'joint4') {
             el.hudJointBadge.textContent = "JOINT 4";
             el.hudJointName.textContent = "Joint 4: Wrist Pitch & Gripper";
-            el.hudJointMotor.textContent = `${state.servo4.name} | ${state.gripper.name}`;
+            el.hudJointName.title = "Joint 4: Wrist Pitch & Gripper";
+            const motorStr = `${state.servo4.name} | ${state.gripper.name}`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'link1') {
             el.hudJointBadge.textContent = "LINK 1";
-            el.hudJointName.textContent = `Link 1 Structure (Length: ${state.L1}mm)`;
-            el.hudJointMotor.textContent = `3D Printed PLA Truss (Infill: ${state.infillPct}%)`;
+            const nameStr = `Link 1 Structure (${state.L1}mm)`;
+            el.hudJointName.textContent = nameStr;
+            el.hudJointName.title = nameStr;
+            const motorStr = `3D Printed PLA Truss (Infill: ${state.infillPct}%)`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'link2') {
             el.hudJointBadge.textContent = "LINK 2";
-            el.hudJointName.textContent = `Link 2 Forearm (Length: ${state.L2}mm)`;
-            el.hudJointMotor.textContent = `3D Printed PLA Truss (Infill: ${state.infillPct}%)`;
+            const nameStr = `Link 2 Forearm (${state.L2}mm)`;
+            el.hudJointName.textContent = nameStr;
+            el.hudJointName.title = nameStr;
+            const motorStr = `3D Printed PLA Truss (Infill: ${state.infillPct}%)`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         } else if (targetType === 'payload') {
             el.hudJointBadge.textContent = "PAYLOAD";
-            el.hudJointName.textContent = `Workpiece Target (${state.payloadG}g)`;
-            el.hudJointMotor.textContent = `Dynamic Lift Load: ${((state.payloadG/1000) * (9.81 + state.accelerationMs2)).toFixed(2)} N`;
+            const nameStr = `Workpiece Target (${state.payloadG}g)`;
+            el.hudJointName.textContent = nameStr;
+            el.hudJointName.title = nameStr;
+            const motorStr = `Dynamic Lift Load: ${((state.payloadG/1000) * (9.81 + state.accelerationMs2)).toFixed(2)} N`;
+            el.hudJointMotor.textContent = motorStr;
+            el.hudJointMotor.title = motorStr;
         }
     }
 
