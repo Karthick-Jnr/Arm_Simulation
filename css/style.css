@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/google-sans');
+@import url('https://fonts.cdnfonts.com/css/google-sans-2');
+@import url('https://fonts.cdnfonts.com/css/product-sans');
+
+/* Google Sans Official WebFont Declarations */
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Google Sans Regular'), local('GoogleSans-Regular'), local('Google Sans'),
+         url('https://fonts.cdnfonts.com/s/143114/GoogleSans-VariableFont_GRADopszwght.woff') format('woff'),
+         url('https://fonts.cdnfonts.com/s/14955/ProductSans-Regular.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 500;
+    src: local('Google Sans Medium'), local('GoogleSans-Medium'),
+         url('https://fonts.cdnfonts.com/s/143114/GoogleSans-VariableFont_GRADopszwght.woff') format('woff'),
+         url('https://fonts.cdnfonts.com/s/14955/ProductSans-Medium.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Google Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Google Sans Bold'), local('GoogleSans-Bold'),
+         url('https://fonts.cdnfonts.com/s/143114/GoogleSans-VariableFont_GRADopszwght.woff') format('woff'),
+         url('https://fonts.cdnfonts.com/s/14955/ProductSans-Bold.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Product Sans'), url('https://fonts.cdnfonts.com/s/14955/ProductSans-Regular.woff') format('woff');
+}
+
+@font-face {
+    font-family: 'Product Sans';
+    font-style: normal;
+    font-weight: 700;
+    src: local('Product Sans Bold'), url('https://fonts.cdnfonts.com/s/14955/ProductSans-Bold.woff') format('woff');
+}
+
+:root {
+    /* Architectural & Brand Palette */
+    --ruled-white: #ffffff;
+    --ruled-bg: #f5f7fa;
+    --ruled-surface: #ffffff;
+    --ruled-slate-card: #6c82a3;
+    --ruled-slate-light: #7d93b2;
+    --ruled-slate-dark: #506686;
+    
+    /* Cobalt Royal Blue Accent */
+    --ruled-cobalt: #002bbb;
+    --ruled-cobalt-dark: #002294;
+    --ruled-cobalt-light: #204de0;
+    --ruled-cobalt-subtle: rgba(0, 43, 187, 0.08);
+
+    /* Laser Chartreuse / Motion Neon Accent */
+    --ruled-laser-lime: #ccff00;
+    --ruled-laser-glow: rgba(204, 255, 0, 0.6);
+    --ruled-laser-dark: #a3cc00;
+
+    /* Typography Hierarchy */
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-faint: #94a3b8;
+    --text-on-slate: #ffffff;
+
+    /* Architectural Grid & Borders */
+    --border-light: rgba(15, 23, 42, 0.09);
+    --border-medium: rgba(15, 23, 42, 0.16);
+    --border-cobalt: rgba(0, 43, 187, 0.25);
+    --grid-line: rgba(15, 23, 42, 0.04);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Google Sans', 'Product Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Google Sans', 'Product Sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-mono, [class*="font-mono"] {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
+body {
+    background-color: var(--ruled-bg);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Minimalist Tech Scrollbars */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--ruled-cobalt);
+}
+
+/* Watermark Background Typography */
+.bg-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20vw;
+    font-weight: 700;
+    color: rgba(100, 116, 139, 0.035);
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    user-select: none;
+    z-index: 1;
+    line-height: 1;
+    font-family: 'Google Sans', 'Product Sans', sans-serif;
+}
+
+/* Architectural Grid Lines Overlay */
+.grid-lines-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-left: 1px solid var(--grid-line);
+    border-right: 1px solid var(--grid-line);
+}
+.grid-lines-overlay > div {
+    border-right: 1px solid var(--grid-line);
+}
+
+/* UI Panels */
+.ruled-panel {
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ruled-panel:hover {
+    border-color: var(--border-medium);
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Slate Denim Card */
+.ruled-slate-card {
+    background: var(--ruled-slate-card);
+    color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(80, 102, 134, 0.15);
+}
+
+.ruled-card {
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.ruled-card:hover {
+    background: #ffffff;
+    border-color: var(--ruled-cobalt);
+    box-shadow: 0 2px 10px rgba(0, 43, 187, 0.06);
+}
+
+/* Slide-out Drawers */
+.drawer-left {
+    transform: translateX(-105%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
+    background: rgba(255, 255, 255, 0.98);
+    border-right: 1px solid var(--border-light);
+}
+.drawer-left.open {
+    transform: translateX(0);
+    box-shadow: 20px 0 50px rgba(15, 23, 42, 0.12);
+}
+
+.drawer-right {
+    transform: translateX(105%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
+    background: rgba(255, 255, 255, 0.98);
+    border-left: 1px solid var(--border-light);
+}
+.drawer-right.open {
+    transform: translateX(0);
+    box-shadow: -20px 0 50px rgba(15, 23, 42, 0.12);
+}
+
+/* Precision Clean Range Sliders */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e2e8f0;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    transition: background 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--ruled-cobalt);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 43, 187, 0.35);
+    border: 2px solid #ffffff;
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    background: var(--ruled-cobalt-light);
+    box-shadow: 0 0 12px rgba(0, 43, 187, 0.5);
+}
+
+/* Precision Select & Inputs */
+select, input[type="number"], input[type="text"] {
+    background: #f8fafc;
+    border: 1px solid var(--border-medium);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: 'Google Sans', 'Product Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+select:focus, input[type="number"]:focus, input[type="text"]:focus {
+    background: #ffffff;
+    border-color: var(--ruled-cobalt);
+    box-shadow: 0 0 0 3px rgba(0, 43, 187, 0.12);
+}
+
+/* Monospace Telemetry & Values */
+.mono-val {
+    font-family: 'JetBrains Mono', 'Google Sans', monospace;
+    letter-spacing: -0.02em;
+}
+
+.tech-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Google Sans', 'Product Sans', sans-serif;
+}
+
+/* Gauge Meter Component */
+.gauge-container {
+    width: 100%;
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+/* Crosshair Decorator */
+.crosshair-corner {
+    position: relative;
+}
+.crosshair-corner::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 6px;
+    height: 6px;
+    border-top: 2px solid var(--ruled-cobalt);
+    border-left: 2px solid var(--ruled-cobalt);
+}
+.crosshair-corner::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 6px;
+    height: 6px;
+    border-bottom: 2px solid var(--ruled-cobalt);
+    border-right: 2px solid var(--ruled-cobalt);
+}

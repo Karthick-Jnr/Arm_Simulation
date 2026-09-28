@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robotic Manipulator Simulation & Sizing Suite</title>
+    <!-- Google Sans & Modern Typography Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/google-sans-2" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/product-sans" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Google Sans"', '"Product Sans"', '"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Three.js & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[#f5f7fa] text-slate-900 flex flex-col h-screen w-screen overflow-hidden select-none relative">
+
+    <!-- Top Navigation & Unified Control Header Bar -->
+    <header class="h-14 px-5 bg-white/95 border-b border-slate-200/80 flex items-center justify-between z-30 shrink-0 gap-4 backdrop-blur-md font-sans">
+        
+        <!-- Left: Drawer Toggle Button & Project Branding -->
+        <div class="flex items-center gap-3">
+            <button id="btn-toggle-left-drawer" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer">
+                <span class="text-[#002bbb] font-bold text-sm">☰</span>
+                <span class="tracking-wider font-semibold text-[11.5px] text-slate-800">01 / CONFIG</span>
+            </button>
+            <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+                <span class="text-sm font-bold tracking-wider text-[#002bbb] uppercase">PROJECT SIMULATOR</span>
+                <span class="hidden md:inline-block text-[11px] font-semibold tracking-widest text-slate-400 uppercase">// 4-DOF MANIPULATOR</span>
+            </div>
+        </div>
+
+        <!-- Center: Dynamic Simulation Run Bar & View Tabs -->
+        <div class="flex items-center gap-3">
+            <!-- Compact Simulation Run / Pause / Reset Widget -->
+            <div class="flex items-center bg-slate-100/90 p-1 rounded-lg border border-slate-200 gap-1.5 shadow-xs">
+                <!-- Square Run/Pause Button -->
+                <button id="btn-sim-run" class="w-8 h-8 rounded-md bg-[#002bbb] hover:bg-[#002294] text-white font-black text-xs flex items-center justify-center shadow-md shadow-[#002bbb]/25 transition-transform active:scale-95 cursor-pointer" title="Start / Resume Dynamic Simulation">
+                    ▶
+                </button>
+                <!-- Square Reset Button -->
+                <button id="btn-sim-reset" class="w-8 h-8 rounded-md bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-300 transition-colors cursor-pointer" title="Reset Arm to Home Pose">
+                    ⏹
+                </button>
+                <!-- Simulation Status Text -->
+                <div class="px-2.5 flex flex-col justify-center border-l border-slate-200">
+                    <div class="flex items-center gap-1.5">
+                        <span id="sim-status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="sim-status-label" class="text-xs font-bold text-slate-800 tracking-wide">STANDBY</span>
+                    </div>
+                    <span id="sim-status-sub" class="text-[9.5px] font-medium text-slate-500 uppercase tracking-tight">Kinematics & Dynamics</span>
+                </div>
+                <!-- Speed Multiplier -->
+                <select id="sim-speed-select" class="text-[11px] py-1 px-1.5 bg-white border-slate-300 text-slate-700 rounded font-semibold">
+                    <option value="0.5">0.5x</option>
+                    <option value="1.0" selected>1.0x</option>
+                    <option value="2.0">2.0x</option>
+                </select>
+                <!-- Loop Toggle -->
+                <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 pr-1 cursor-pointer">
+                    <input id="sim-loop-toggle" type="checkbox" checked class="rounded bg-white border-slate-300 text-[#002bbb] focus:ring-0">
+                    <span>LOOP</span>
+                </label>
+            </div>
+
+            <!-- View Switcher (3D vs 2D) -->
+            <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                <button id="tab-3d-btn" class="px-3.5 py-1 rounded-md font-bold text-xs bg-[#002bbb] text-white shadow-xs transition-all cursor-pointer">
+                    3D CAD
+                </button>
+                <button id="tab-2d-btn" class="px-3.5 py-1 rounded-md font-bold text-xs bg-transparent text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+                    2D FBD
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Presets & Right Drawer Toggle Button -->
+        <div class="flex items-center gap-2">
+            <!-- Quick Presets -->
+            <div class="hidden lg:flex items-center gap-1.5">
+                <button id="btn-preset-home" class="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 cursor-pointer">HOME</button>
+                <button id="btn-preset-pick" class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#002bbb]/10 hover:bg-[#002bbb]/20 border border-[#002bbb]/30 text-[#002bbb] cursor-pointer">PICK (300mm)</button>
+                <button id="btn-preset-maxreach" class="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 cursor-pointer">MAX REACH</button>
+            </div>
+
+            <button id="btn-toggle-right-drawer" class="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-300/80 text-slate-800 font-semibold text-xs flex items-center gap-2 transition-all shadow-xs cursor-pointer">
+                <span class="text-[#002bbb] text-sm">📊</span>
+                <span class="tracking-wider font-semibold text-[11.5px] text-slate-800">03 / TELEMETRY</span>
+            </button>
+            <button id="btn-export-report" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#6c82a3] hover:bg-[#506686] text-white transition-colors cursor-pointer shadow-xs" title="Export Configuration JSON">
+                EXPORT
+            </button>
+        </div>
+
+    </header>
+
+    <!-- FULLSCREEN WORKSPACE VIEWPORT AREA -->
+    <main class="flex-1 w-full h-full relative overflow-hidden bg-[#f5f7fa]">
+
+        <!-- Watermark Background Logo -->
+        <div class="bg-watermark">SIMULATOR</div>
+
+        <!-- Architectural Column Grid Lines Overlay -->
+        <div class="grid-lines-overlay">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+        <!-- 3D WebGL Canvas Container (Full Screen) -->
+        <div id="viewport-3d-container" class="w-full h-full relative cursor-grab active:cursor-grabbing z-10"></div>
+
+        <!-- 2D Free-Body Diagram Canvas Container -->
+        <div id="viewport-2d-container" class="w-full h-full relative hidden bg-[#ffffff] z-10">
+            <canvas id="fbd-canvas" class="w-full h-full"></canvas>
+        </div>
+
+        <!-- Floating Active Joint HUD Badge -->
+        <div id="active-joint-hud" class="absolute top-4 left-4 ruled-panel p-3.5 flex flex-col gap-1.5 z-20 shadow-lg max-w-xs crosshair-corner border-slate-300/70 bg-white/95 backdrop-blur-md font-sans">
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#002bbb] flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#ccff00] border border-[#002bbb] animate-pulse"></span>
+                    01 / ACTIVE TARGET
+                </span>
+                <span id="hud-joint-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#6c82a3] text-white">JOINT 1</span>
+            </div>
+            <div id="hud-joint-name" class="text-xs font-bold text-slate-900 tracking-tight">Joint 1: Base Azimuth Slew Hub</div>
+            <div id="hud-joint-motor" class="text-[11px] font-medium text-slate-500">RDS5160 High Torque (60 kg·cm)</div>
+            
+            <!-- Quick Joint Select Buttons -->
+            <div class="flex items-center gap-1 mt-1 pt-1.5 border-t border-slate-200">
+                <button id="btn-select-j1" class="flex-1 py-1 text-[10px] font-bold rounded bg-[#002bbb] text-white transition-all shadow-xs cursor-pointer">J1</button>
+                <button id="btn-select-j2" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer">J2</button>
+                <button id="btn-select-j3" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer">J3</button>
+                <button id="btn-select-j4" class="flex-1 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer">J4</button>
+            </div>
+        </div>
+
+        <!-- Floating Viewport Layer Controls (Top Right Corner of Canvas) -->
+        <div class="absolute top-4 right-4 ruled-panel p-2.5 flex flex-col gap-1.5 z-20 text-[11px] font-semibold font-sans bg-white/95 backdrop-blur-md border-slate-300/70">
+            <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+                <input id="toggle-vectors" type="checkbox" checked class="rounded bg-white border-slate-300 text-[#002bbb] focus:ring-0">
+                <span>FORCE VECTORS [W]</span>
+            </label>
+            <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+                <input id="toggle-workspace" type="checkbox" checked class="rounded bg-white border-slate-300 text-[#002bbb] focus:ring-0">
+                <span>WORKSPACE CLOUD</span>
+            </label>
+        </div>
+
+    </main>
+
+    <!-- LEFT SLIDE-OUT DRAWER: CONFIGURATION & HARDWARE -->
+    <aside id="left-drawer" class="drawer-left absolute top-14 left-0 bottom-0 w-88 sm:w-96 bg-white border-r border-slate-200 p-4 flex flex-col gap-3.5 overflow-y-auto z-40 font-sans">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+            <h2 class="text-xs font-bold tracking-wider text-slate-900 uppercase flex items-center gap-2">
+                <span class="text-[#002bbb]">⚙</span> 01 / HARDWARE MATRIX
+            </h2>
+            <button id="btn-close-left-drawer" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs font-bold flex items-center justify-center border border-slate-200 cursor-pointer">
+                ✕
+            </button>
+        </div>
+
+        <!-- 1. Material & Infill -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb]">01 / STRUCTURAL MATERIAL</div>
+            <div>
+                <label class="text-[11px] font-medium text-slate-600 block mb-0.5">Polymer / Alloy</label>
+                <select id="mat-select" class="w-full text-xs"></select>
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                    <span>3D PRINT INFILL</span>
+                    <span id="infill-val" class="text-[#002bbb] font-bold mono-val">35%</span>
+                </div>
+                <input id="infill-slider" type="range" min="15" max="100" step="5" value="35" class="w-full">
+            </div>
+        </section>
+
+        <!-- 2. Market Servo Motor Catalog -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb]">02 / ACTUATOR & MOTOR MATRIX</div>
+            <div class="space-y-2 text-xs">
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">Joint 1 (Base Slew)</label>
+                    <select id="servo1-select" class="w-full text-xs"></select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">Joint 2 (Shoulder Pitch)</label>
+                    <select id="servo2-select" class="w-full text-xs"></select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">Joint 3 (Elbow Pitch)</label>
+                    <select id="servo3-select" class="w-full text-xs"></select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">Joint 4 (Wrist / Gripper)</label>
+                    <select id="servo4-select" class="w-full text-xs"></select>
+                </div>
+                <div>
+                    <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">End-Effector Gripper</label>
+                    <select id="gripper-select" class="w-full text-xs"></select>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Parametric Custom Link Lengths -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb] flex justify-between">
+                <span>03 / LINK DIMENSIONS</span>
+                <span class="text-slate-400 font-semibold">[MM]</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <label class="text-slate-500 text-[11px] font-medium block mb-1">Link 1 (L₁)</label>
+                    <input id="l1-input" type="number" min="50" max="1500" step="10" value="170" class="w-full text-center mono-val font-bold text-[#002bbb]">
+                </div>
+                <div>
+                    <label class="text-slate-500 text-[11px] font-medium block mb-1">Link 2 (L₂)</label>
+                    <input id="l2-input" type="number" min="50" max="1500" step="10" value="170" class="w-full text-center mono-val font-bold text-[#002bbb]">
+                </div>
+                <div>
+                    <label class="text-slate-500 text-[11px] font-medium block mb-1">Gripper (L₃)</label>
+                    <input id="l3-input" type="number" min="20" max="300" step="5" value="60" class="w-full text-center mono-val font-bold text-slate-700">
+                </div>
+                <div>
+                    <label class="text-slate-500 text-[11px] font-medium block mb-1">Base Height (L₀)</label>
+                    <input id="lbase-input" type="number" min="20" max="300" step="5" value="48" class="w-full text-center mono-val font-bold text-slate-700">
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Interactive Kinematic Sliders -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb]">04 / KINEMATIC ARTICULATION [FK]</div>
+            <div class="space-y-2.5">
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                        <span>θ₁ BASE</span>
+                        <span id="th1-val" class="text-[#002bbb] font-bold mono-val">0°</span>
+                    </div>
+                    <input id="th1-slider" type="range" min="-135" max="135" step="1" value="0" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                        <span>θ₂ SHOULDER</span>
+                        <span id="th2-val" class="text-[#002bbb] font-bold mono-val">24°</span>
+                    </div>
+                    <input id="th2-slider" type="range" min="-15" max="115" step="1" value="24" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                        <span>θ₃ ELBOW</span>
+                        <span id="th3-val" class="text-[#002bbb] font-bold mono-val">-54°</span>
+                    </div>
+                    <input id="th3-slider" type="range" min="-145" max="25" step="1" value="-54" class="w-full">
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                        <span>θ₄ WRIST</span>
+                        <span id="th4-val" class="text-slate-700 font-bold mono-val">30°</span>
+                    </div>
+                    <input id="th4-slider" type="range" min="-90" max="90" step="1" value="30" class="w-full">
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Payload & Acceleration -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb]">05 / PAYLOAD & DYNAMIC LOAD</div>
+            <div>
+                <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                    <span>PAYLOAD</span>
+                    <span id="payload-val" class="text-[#002bbb] font-bold mono-val">200 g</span>
+                </div>
+                <input id="payload-slider" type="range" min="0" max="600" step="25" value="200" class="w-full">
+            </div>
+            <div>
+                <div class="flex justify-between text-xs font-semibold text-slate-700 mb-0.5">
+                    <span>LIFT ACCELERATION</span>
+                    <span id="accel-val" class="text-slate-900 font-bold mono-val">2.5 m/s²</span>
+                </div>
+                <input id="accel-slider" type="range" min="0" max="5.0" step="0.5" value="2.5" class="w-full">
+            </div>
+        </section>
+
+    </aside>
+
+    <!-- RIGHT SLIDE-OUT DRAWER: REAL-TIME TELEMETRY & TORQUES -->
+    <aside id="right-drawer" class="drawer-right absolute top-14 right-0 bottom-0 w-84 sm:w-92 bg-white border-l border-slate-200 p-4 flex flex-col gap-3.5 overflow-y-auto z-40 font-sans">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+            <h2 class="text-xs font-bold tracking-wider text-slate-900 uppercase flex items-center gap-2">
+                <span class="text-[#002bbb]">📊</span> 03 / TELEMETRY & DYNAMICS
+            </h2>
+            <button id="btn-close-right-drawer" class="w-6 h-6 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs font-bold flex items-center justify-center border border-slate-200 cursor-pointer">
+                ✕
+            </button>
+        </div>
+
+        <!-- Kinematic Metrics -->
+        <section class="ruled-card p-3 flex flex-col gap-2">
+            <div class="tech-label text-[#002bbb]">01 / KINEMATIC STATE</div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="bg-white border border-slate-200 rounded p-2">
+                    <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">RADIAL REACH (R)</div>
+                    <div id="tel-reach" class="text-base font-bold text-slate-900 mono-val mt-0.5">387 mm</div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded p-2">
+                    <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">TIP HEIGHT (Z)</div>
+                    <div id="tel-z" class="text-base font-bold text-slate-900 mono-val mt-0.5">32 mm</div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded p-2">
+                    <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">MOVING MASS</div>
+                    <div id="tel-moving-mass" class="text-base font-bold text-[#002bbb] mono-val mt-0.5">485 g</div>
+                </div>
+                <div class="bg-white border border-slate-200 rounded p-2">
+                    <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-tight">DEFLECTION (δ)</div>
+                    <div id="tel-deflection" class="text-base font-bold text-emerald-600 mono-val mt-0.5">0.42 mm</div>
+                </div>
+            </div>
+            <div class="text-[10.5px] text-slate-500 font-medium flex justify-between px-1 mt-1">
+                <span>LINK 1: <strong id="tel-l1-mass" class="text-slate-800 mono-val">58g</strong></span>
+                <span>LINK 2: <strong id="tel-l2-mass" class="text-slate-800 mono-val">46g</strong></span>
+            </div>
+        </section>
+
+        <!-- Joint Torques & Safety Margins -->
+        <section class="ruled-card p-3 flex flex-col gap-2.5">
+            <div class="tech-label text-[#002bbb]">02 / ACTUATOR TORQUE & SAFETY MARGINS</div>
+            <div class="space-y-2.5 text-xs">
+                <!-- Joint 1 -->
+                <div class="bg-white border border-slate-200 rounded p-2 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800 text-[11px]">JOINT 1 (BASE SLEW)</span>
+                        <span id="sf-j1-badge" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">SF: 4.2x</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div id="gauge-j1-fill" class="h-full bg-emerald-500" style="width: 20%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[10.5px] text-slate-500 font-medium">
+                        <span>DYNAMIC TORQUE:</span>
+                        <span id="torque-j1-text" class="text-slate-800 font-bold mono-val">4.2 / 60 kg·cm</span>
+                    </div>
+                </div>
+
+                <!-- Joint 2 -->
+                <div class="bg-white border border-[#002bbb]/30 rounded p-2 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-[#002bbb] text-[11px]">JOINT 2 (SHOULDER)</span>
+                        <span id="sf-j2-badge" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">SF: 2.4x</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div id="gauge-j2-fill" class="h-full bg-[#002bbb]" style="width: 42%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[10.5px] text-slate-500 font-medium">
+                        <span>DYNAMIC TORQUE:</span>
+                        <span id="torque-j2-text" class="text-slate-800 font-bold mono-val">25.1 / 60 kg·cm</span>
+                    </div>
+                </div>
+
+                <!-- Joint 3 -->
+                <div class="bg-white border border-slate-200 rounded p-2 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800 text-[11px]">JOINT 3 (ELBOW)</span>
+                        <span id="sf-j3-badge" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">SF: 1.9x</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div id="gauge-j3-fill" class="h-full bg-emerald-500" style="width: 53%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[10.5px] text-slate-500 font-medium">
+                        <span>DYNAMIC TORQUE:</span>
+                        <span id="torque-j3-text" class="text-slate-800 font-bold mono-val">10.8 / 20 kg·cm</span>
+                    </div>
+                </div>
+
+                <!-- Joint 4 -->
+                <div class="bg-white border border-slate-200 rounded p-2 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800 text-[11px]">JOINT 4 (WRIST)</span>
+                        <span id="sf-j4-badge" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">SF: 3.1x</span>
+                    </div>
+                    <div class="gauge-container">
+                        <div id="gauge-j4-fill" class="h-full bg-emerald-500" style="width: 32%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[10.5px] text-slate-500 font-medium">
+                        <span>DYNAMIC TORQUE:</span>
+                        <span id="torque-j4-text" class="text-slate-800 font-bold mono-val">0.7 / 2.2 kg·cm</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Structural Bending Stress -->
+        <section class="ruled-card p-3 flex flex-col gap-2">
+            <div class="tech-label text-[#002bbb]">03 / STRUCTURAL INTEGRITY</div>
+            <div class="space-y-1.5 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-medium">LINK 1 ROOT BENDING:</span>
+                    <span id="tel-stress-l1" class="font-bold text-emerald-600 mono-val">12.4 MPa</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-medium">LINK 2 ROOT BENDING:</span>
+                    <span id="tel-stress-l2" class="font-bold text-emerald-600 mono-val">8.6 MPa</span>
+                </div>
+            </div>
+        </section>
+
+    </aside>
+
+    <!-- Scripts -->
+    <script src="js/motor_db.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/three_view.js"></script>
+    <script src="js/fbd_view.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
